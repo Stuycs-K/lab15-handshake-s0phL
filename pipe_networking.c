@@ -15,7 +15,7 @@ int server_setup() {
 }
 
 /*=========================
-  server_handshake 
+  server_handshake
   args: int * to_client
 
   Performs the server side pipe 3 way handshake.
@@ -24,7 +24,17 @@ int server_setup() {
   returns the file descriptor for the upstream pipe (see server setup).
   =========================*/
 int server_handshake(int *to_client) {
-  int from_client;
+  mkfifo(WKP, 0666);
+  *to_client = open(WKP, O_WRONLY);
+  if (*to_client == -1) {
+    perror("Failed to open FIFO for writing");
+    exit(1);
+  }
+
+  char message[100];
+  sprintf(message, "%d", SYN);
+  write(*to_client, message, sizeof(message));
+  int from_client = open(WKP, O_RDONLY);
   return from_client;
 }
 
@@ -39,7 +49,36 @@ int server_handshake(int *to_client) {
   returns the file descriptor for the downstream pipe.
   =========================*/
 int client_handshake(int *to_server) {
-  int from_server;
+  char pid[100];
+  sprintf(pid, "%d", getpid());
+  mkfifo(pid, 0666);
+  *to_server = open(pid, O_WRONLY);
+  if (*to_server == -1) {
+    perror("Failed to open FIFO for writing");
+    exit(1);
+  }
+  char message[100];
+  sprintf(message, "%d", SYN);
+  write(*to_server, message, sizeof(message));
+
+  int from_server = open(WKP, O_RDONLY);
+  if (from_server == -1) {
+    perror("Failed to open from server FIFO for reading");
+    exit(1);
+  }
+  char response[100];
+  read(from_server, response, sizeof(response));
+  response; //++
+
+  write(*to_server, response, sizeof(response));
+
+  char pid[100];
+  sprintf(pid, "%d", getpid());
+  mkfifo(pid, 0666);
+  *to_server = open(pid, O_WRONLY);
+  char message[100];
+  sprintf(message, "%d", SYN_ACK);
+  write(*to_server, message, sizeof(message));
   return from_server;
 }
 
@@ -56,5 +95,3 @@ int server_connect(int from_client) {
   int to_client  = 0;
   return to_client;
 }
-
-
