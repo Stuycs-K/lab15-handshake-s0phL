@@ -13,8 +13,15 @@
   returns the file descriptor for the upstream pipe.
   =========================*/
 int server_setup() {
-  mkfifo(WKP, 0666);
+  if (mkfifo(WKP, 0666) == -1) {
+    perror("WKP creation error");
+    exit(1);
+  }
   int from_client = open(WKP, O_RDONLY);
+  if (from_client == -1) {
+    perror("WKP opening error");
+    exit(1);
+  }
   remove(WKP);
   return from_client;
 }
@@ -67,7 +74,11 @@ int server_handshake_half(int *to_client, int from_client) {
 int client_handshake(int *to_server) {
   char client_pid[100]; //private pipe
   sprintf(client_pid, "%d", getpid());
-  mkfifo(client_pid, 0666);
+
+  if (mkfifo(client_pid, 0666) == -1) {
+    perror("Private pipe creation error");
+    exit(1);
+  }
 
   *to_server = open(WKP, O_WRONLY);
   write(*to_server, client_pid, sizeof(client_pid));
