@@ -1,28 +1,30 @@
-#include "pipe_networking.h"
+#include "pipe_networking1.h"
+#include <time.h>
+#include <signal.h>
 
 int main() {
+  srand(time(NULL));
+
   int to_client;
   int from_client;
-  int to_server;
-  int from_server;
 
-  int f = fork();
-  if (f < 0) {
-    perror("fork fail");
-    exit(1);
-  }
-  else if (f == 0) {
-    from_server = client_handshake(&to_server);
-    write(from_server, "\n", 1);
+  signal(SIGPIPE, SIG_IGN);
 
-  }
-  else {
+  while (1) {
     from_client = server_handshake(&to_client);
-    server_setup();
-    char line[100];
-    read(from_client, line, sizeof(line));
 
+    while (1) {
+      int random_int = rand() % 101;
+      
+      if (write(to_client, &random_int, sizeof(random_int)) == -1) {
+        close(to_client);
+        close(from_client);       
+        break;
+      }
+
+      sleep(1);
+    }
   }
 
-
+  return 0;
 }
