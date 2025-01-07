@@ -1,8 +1,6 @@
 #include "pipe_networking.h"
 #include <time.h>
 #include <signal.h>
-// #include <fcntl.h>
-// #include <unistd.h>
 
 int main() {
   srand(time(NULL));
