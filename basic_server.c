@@ -9,7 +9,6 @@ int main() {
 
   while (1) {
     int random_int = rand() % 101;
-    if (random_int == 100) exit(0);
     write(to_client, &random_int, sizeof(random_int));
     sleep(1);
   }
